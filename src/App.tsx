@@ -11,6 +11,8 @@ import { SubmissionModal } from './components/SubmissionModal';
 import { SoloHackerStudio } from './components/SoloHackerStudio';
 import { GitHubRepoConnect } from './components/GitHubRepoConnect';
 import { Leaderboard } from './components/Leaderboard';
+import { GeminiChatbot } from './components/GeminiChatbot';
+import { HowToRecordModal } from './components/HowToRecordModal';
 import { INITIAL_PROJECTS } from './data/hackathonData';
 import { Project } from './types/hackathon';
 import { CheckCircle2, ArrowRight, ShieldCheck, Terminal, Users, Cpu } from 'lucide-react';
@@ -18,6 +20,7 @@ import { CheckCircle2, ArrowRight, ShieldCheck, Terminal, Users, Cpu } from 'luc
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
+  const [isHowToRecordOpen, setIsHowToRecordOpen] = useState<boolean>(false);
   const [submissionDraft, setSubmissionDraft] = useState<Partial<Project> | null>(null);
   const [projects, setProjects] = useState<Project[]>(() => {
     try {
@@ -143,6 +146,7 @@ export default function App() {
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         onOpenSubmitModal={handleOpenSubmit}
+        onOpenHowToRecord={() => setIsHowToRecordOpen(true)}
         onScrollTo={handleScrollTo}
       />
 
@@ -287,6 +291,15 @@ export default function App() {
         onSubmitSuccess={handleAddProject}
         initialDraft={submissionDraft}
       />
+
+      {/* How To Record Demo Video Modal */}
+      <HowToRecordModal
+        isOpen={isHowToRecordOpen}
+        onClose={() => setIsHowToRecordOpen(false)}
+      />
+
+      {/* Gemini AI Multi-Turn Chatbot */}
+      <GeminiChatbot />
     </div>
   );
 }

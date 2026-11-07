@@ -1,10 +1,11 @@
 import React from 'react';
-import { Sun, Moon, Sparkles } from 'lucide-react';
+import { Sun, Moon, Sparkles, Video } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   onOpenSubmitModal: () => void;
+  onOpenHowToRecord: () => void;
   onScrollTo: (sectionId: string) => void;
 }
 
@@ -12,6 +13,7 @@ export const Header: React.FC<HeaderProps> = ({
   darkMode,
   setDarkMode,
   onOpenSubmitModal,
+  onOpenHowToRecord,
   onScrollTo,
 }) => {
   return (
@@ -96,6 +98,15 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label="Toggle theme"
           >
             {darkMode ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-neutral-300" />}
+          </button>
+
+          <button
+            onClick={onOpenHowToRecord}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
+            title="How to record your submission video"
+          >
+            <Video className="w-3.5 h-3.5 text-emerald-400" />
+            <span>How to Record</span>
           </button>
 
           <button
