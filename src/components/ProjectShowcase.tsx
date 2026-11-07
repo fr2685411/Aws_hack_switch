@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Project, ChatPlatform, AgentHarness } from '../types/hackathon';
-import { Search, ThumbsUp, Github, ExternalLink, Filter, Layers, Code, Check } from 'lucide-react';
+import { Search, ThumbsUp, Github, ExternalLink, Filter, Layers, Code, Check, Share2, Copy } from 'lucide-react';
 
 interface ProjectShowcaseProps {
   projects: Project[];
@@ -19,6 +19,19 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [harnessFilter, setHarnessFilter] = useState<string>('all');
   const [activeModalProject, setActiveModalProject] = useState<Project | null>(null);
+  const [copiedShareProjectId, setCopiedShareProjectId] = useState<string | null>(null);
+
+  const generateSharePostText = (project: Project): string => {
+    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://switch.live';
+    return `Check out "${project.title}" built for the @WeMakeDevs Flip the Switch Hackathon! 🚀\n\nBridging ${project.agentHarness} into ${project.chatPlatform} using Switch AI with human-in-the-loop approvals.\n\nLive Platform: ${appUrl}\nRepo: ${project.repoUrl}\n\n#WeMakeDevs #SwitchAI #OpenSource #DevOps`;
+  };
+
+  const handleCopySharePost = (project: Project) => {
+    const text = generateSharePostText(project);
+    navigator.clipboard.writeText(text);
+    setCopiedShareProjectId(project.id);
+    setTimeout(() => setCopiedShareProjectId(null), 2500);
+  };
 
   const filteredProjects = projects.filter((p) => {
     const matchesSearch =
@@ -188,6 +201,28 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                     </button>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCopySharePost(project)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-lg border transition-all ${
+                          copiedShareProjectId === project.id
+                            ? 'bg-emerald-950 border-emerald-600 text-emerald-300 font-semibold'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800'
+                        }`}
+                        title="Copy pre-filled tweet / post format with project details and hackathon link"
+                      >
+                        {copiedShareProjectId === project.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Copied Post!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Share</span>
+                          </>
+                        )}
+                      </button>
+
                       <a
                         href={project.repoUrl}
                         target="_blank"
@@ -267,29 +302,52 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                 </div>
               </div>
 
-              {/* Links */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-neutral-800">
-                <div className="flex items-center gap-3">
+              {/* Links & Share Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-neutral-800">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <a
                     href={activeModalProject.repoUrl}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="px-4 py-2 text-xs font-medium text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg flex items-center gap-2"
+                    className="px-3.5 py-2 text-xs font-medium text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg flex items-center gap-1.5 transition-colors"
                   >
                     <Github className="w-4 h-4" />
-                    <span>View GitHub Repo</span>
+                    <span>GitHub Repo</span>
                   </a>
+
                   {activeModalProject.demoUrl && (
                     <a
                       href={activeModalProject.demoUrl}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="px-4 py-2 text-xs font-medium text-neutral-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg flex items-center gap-2"
+                      className="px-3.5 py-2 text-xs font-medium text-neutral-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg flex items-center gap-1.5 transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
                       <span>Live Demo / Video</span>
                     </a>
                   )}
+
+                  <button
+                    onClick={() => handleCopySharePost(activeModalProject)}
+                    className={`px-3 py-2 text-xs font-mono rounded-lg border transition-all flex items-center gap-1.5 ${
+                      copiedShareProjectId === activeModalProject.id
+                        ? 'bg-emerald-950 border-emerald-600 text-emerald-300'
+                        : 'bg-neutral-950 border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800'
+                    }`}
+                    title="Copy pre-filled tweet format"
+                  >
+                    {copiedShareProjectId === activeModalProject.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Copied Tweet!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Share on X</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 <button

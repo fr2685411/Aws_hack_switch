@@ -84,6 +84,12 @@ export const Header: React.FC<HeaderProps> = ({
             <span>GitHub Connect</span>
           </button>
           <button
+            onClick={() => onScrollTo('mesh-map')}
+            className="hover:text-emerald-400 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 text-cyan-400"
+          >
+            <span>Global Mesh</span>
+          </button>
+          <button
             onClick={() => onScrollTo('leaderboard')}
             className="text-amber-400 font-medium hover:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
           >

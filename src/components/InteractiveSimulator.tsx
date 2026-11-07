@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, RotateCcw, CheckCircle2, ArrowRight, Shield, GitPullRequest, AlertTriangle, MessageSquare, Terminal as TerminalIcon, Sparkles } from 'lucide-react';
 import { AgentHarness, ChatPlatform } from '../types/hackathon';
+import { InteractiveWebhookSimulator } from './InteractiveWebhookSimulator';
 
 type ScenarioKey = 'outage' | 'pr-review' | 'cve-patch' | 'chatops';
 
@@ -230,6 +231,11 @@ export const InteractiveSimulator: React.FC = () => {
           <p className="text-neutral-400 text-base leading-relaxed">
             See the exact pipeline in action: from production alert or GitHub webhook, through Switch AI gateway, into terminal agents (Claude Code, Cursor, OpenCode), and back into Slack, Discord, or Teams with human approval controls.
           </p>
+        </div>
+
+        {/* Live Interactive Webhook Dispatch Simulator */}
+        <div className="mb-14">
+          <InteractiveWebhookSimulator />
         </div>
 
         {/* Interactive Controls & Scenario Selector */}

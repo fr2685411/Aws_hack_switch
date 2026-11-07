@@ -15,6 +15,7 @@ import { GeminiChatbot } from './components/GeminiChatbot';
 import { HowToRecordModal } from './components/HowToRecordModal';
 import { Workflow3DSection } from './components/3d/Workflow3DSection';
 import { SubmissionReadinessChecklist } from './components/SubmissionReadinessChecklist';
+import { GlobalAgentMap } from './components/GlobalAgentMap';
 import { INITIAL_PROJECTS } from './data/hackathonData';
 import { Project } from './types/hackathon';
 import { CheckCircle2, ArrowRight, ShieldCheck, Terminal, Users, Cpu } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function App() {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isHowToRecordOpen, setIsHowToRecordOpen] = useState<boolean>(false);
   const [submissionDraft, setSubmissionDraft] = useState<Partial<Project> | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
   const [projects, setProjects] = useState<Project[]>(() => {
     try {
       const saved = localStorage.getItem('switch_hackathon_projects');
@@ -56,6 +58,13 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Google Maps Demo Quota Listener
+  useEffect(() => {
+    const handleQuota = () => setQuotaExceeded(true);
+    window.addEventListener('gmp-quota-exceeded', handleQuota);
+    return () => window.removeEventListener('gmp-quota-exceeded', handleQuota);
+  }, []);
 
   // Persist projects to localStorage
   useEffect(() => {
@@ -143,6 +152,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans transition-colors duration-200">
+      {/* Google Maps Demo Quota Defense Banner */}
+      {quotaExceeded && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
+          <span>
+            Google Maps Platform quota reached. If you are the app owner, visit{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-amber-950 hover:text-amber-800"
+            >
+              maps developer site
+            </a>{' '}
+            for instructions to update your account.
+          </span>
+        </div>
+      )}
+
       {/* Top Bar Header */}
       <Header
         darkMode={darkMode}
@@ -261,6 +288,13 @@ export default function App() {
 
         {/* 3D Digital Twin: Switch AI Bots & Workflows Scene */}
         <Workflow3DSection />
+
+        {/* Global Agent Mesh & Developer Locator (Google Maps Platform) */}
+        <section id="mesh-map" className="py-16 border-b border-neutral-800 bg-neutral-950">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <GlobalAgentMap />
+          </div>
+        </section>
 
         {/* Hackathon Submission Readiness & Prize Qualification Audit */}
         <SubmissionReadinessChecklist

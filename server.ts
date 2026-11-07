@@ -97,7 +97,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Live Discord Webhook & Gateway Bridge
 interface WorkspaceEvent {
   id: string;
   source: string;
@@ -106,6 +105,13 @@ interface WorkspaceEvent {
   status: string;
   timestamp: string;
   botWorkspaceId?: string;
+  eventType?: string;
+  agentHarness?: string;
+  chatPlatform?: string;
+  channel?: string;
+  diffSnippet?: string;
+  actions?: string[];
+  latencyMs?: number;
 }
 
 const registeredBots: Record<string, { id: string; name: string; status: string; connectedAt: string }> = {
@@ -126,6 +132,11 @@ const recentEvents: WorkspaceEvent[] = [
     status: 'CONNECTED',
     timestamp: new Date().toISOString(),
     botWorkspaceId: '2da969e8-ba79-47ec-be27-f983d58fec9a',
+    eventType: 'WORKSPACE_LINKED',
+    agentHarness: 'Kotlin Firebase Daemon',
+    chatPlatform: 'Discord',
+    channel: '#pr-reviews',
+    latencyMs: 14,
   },
   {
     id: 'evt_init01',
@@ -134,22 +145,49 @@ const recentEvents: WorkspaceEvent[] = [
     problem: 'Discord Webhook listener ready on /api/webhook/discord',
     status: 'LISTENING',
     timestamp: new Date().toISOString(),
+    eventType: 'GATEWAY_HEALTHY',
+    agentHarness: 'Claude Code',
+    chatPlatform: 'Discord',
+    channel: '#switch-relay',
+    latencyMs: 8,
   },
 ];
 
 app.post('/api/webhook/discord', (req, res) => {
-  const { content, author, message, eventId, botWorkspaceId } = req.body;
+  const {
+    content,
+    author,
+    message,
+    eventId,
+    botWorkspaceId,
+    eventType = 'GITHUB_PR_OPENED',
+    agentHarness = 'Claude Code',
+    chatPlatform = 'Discord',
+    channel = '#pr-reviews',
+    diffSnippet,
+    actions,
+    isFailureDrill = false,
+  } = req.body;
+
   const problem = content || message || 'Event received from Discord bot';
   const effectiveId = botWorkspaceId || '2da969e8-ba79-47ec-be27-f983d58fec9a';
+  const latencyMs = Math.floor(Math.random() * 15) + 12; // 12-27ms realistic gateway latency
 
   const event: WorkspaceEvent = {
     id: eventId || `evt_${Date.now().toString().slice(-6)}`,
-    source: 'Discord Bot',
+    source: isFailureDrill ? 'Switch Safety Sentinel' : `${chatPlatform} Bot`,
     author: author || 'Discord User',
     problem,
-    status: 'PENDING_APPROVAL',
+    status: isFailureDrill ? 'SAFETY_TRIPWIRE_TRIGGERED' : 'PENDING_APPROVAL',
     timestamp: new Date().toISOString(),
     botWorkspaceId: effectiveId,
+    eventType,
+    agentHarness,
+    chatPlatform,
+    channel,
+    diffSnippet: diffSnippet || '// Hotfix diff\n- const cache = null;\n+ const cache = await redis.get(key) ?? fallback();',
+    actions: actions || ['Approve & Deploy Hotfix', 'Run Regression Tests', 'Reject & Rollback'],
+    latencyMs,
   };
 
   recentEvents.unshift(event);
@@ -157,8 +195,37 @@ app.post('/api/webhook/discord', (req, res) => {
 
   return res.json({
     success: true,
-    message: 'Event successfully received by Switch AI Gateway',
+    message: isFailureDrill
+      ? 'Safety drill triggered: Agent hallucination caught by Switch AST Tripwire'
+      : 'Event successfully received and processed by Switch AI Gateway',
     botWorkspaceId: effectiveId,
+    latencyMs,
+    trace: [
+      { step: 'INGEST', name: 'Webhook Ingested by Switch Gateway', durationMs: 4 },
+      { step: 'NORMALIZE', name: 'Payload Normalized to Switch Unified Schema', durationMs: 12 },
+      { step: 'ROUTER', name: `Dispatched to ${agentHarness} Worker via STDIN`, durationMs: 45 },
+      {
+        step: 'ANALYSIS',
+        name: isFailureDrill
+          ? 'AST Tripwire: Hallucinated Deprecated API (2 Unit Tests Failed - Quarantined)'
+          : 'AST Diff Parsed & Repro Unit Test Executed',
+        durationMs: isFailureDrill ? 145 : 120,
+      },
+      {
+        step: 'CARD_GEN',
+        name: isFailureDrill
+          ? `Emergency Tripwire Alert Card Delivered to ${channel}`
+          : `Block Kit UI Delivered to ${channel} on ${chatPlatform}`,
+        durationMs: 25,
+      },
+      {
+        step: 'AWAIT_HUMAN',
+        name: isFailureDrill
+          ? 'Human Governance Gate: Awaiting Emergency Rollback Decision'
+          : 'Human-in-the-Loop Gate: Awaiting Peer Decision',
+        durationMs: 0,
+      },
+    ],
     event,
   });
 });
@@ -179,6 +246,15 @@ app.get('/api/bot-status', (req, res) => {
 
 app.get('/api/events', (_req, res) => {
   return res.json({ events: recentEvents });
+});
+
+app.get('/api/config/maps', (_req, res) => {
+  const apiKey =
+    process.env.VITE_GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.GMP_API_KEY ||
+    '';
+  return res.json({ apiKey });
 });
 
 // Vite middleware in dev or static files in production

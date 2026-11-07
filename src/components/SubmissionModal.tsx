@@ -1,8 +1,55 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Project, ChatPlatform, AgentHarness, TrackId } from '../types/hackathon';
-import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, ShieldCheck, CheckCircle2, Bot, Play, ExternalLink, Copy } from 'lucide-react';
+import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, ShieldCheck, CheckCircle2, Bot, Play, ExternalLink, Copy, PartyPopper, BarChart3, TrendingUp, Eye, MousePointerClick, Award, Activity } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from 'recharts';
 import { TRACKS } from '../data/hackathonData';
+
+export const PLATFORM_ANALYTICS_DATA = [
+  { name: 'Discord', views: 420, interactions: 104, rate: 24.8 },
+  { name: 'Slack', views: 350, interactions: 77, rate: 22.0 },
+  { name: 'MS Teams', views: 210, interactions: 32, rate: 15.2 },
+  { name: 'GitHub Repo', views: 560, interactions: 89, rate: 15.9 },
+  { name: 'WeMakeDevs Portal', views: 680, interactions: 152, rate: 22.4 },
+];
+
+export const DAILY_ANALYTICS_DATA = [
+  { name: 'Mon', views: 180, interactions: 38, rate: 21.1 },
+  { name: 'Tue', views: 290, interactions: 64, rate: 22.0 },
+  { name: 'Wed', views: 410, interactions: 95, rate: 23.1 },
+  { name: 'Thu', views: 520, interactions: 122, rate: 23.4 },
+  { name: 'Fri', views: 680, interactions: 168, rate: 24.7 },
+  { name: 'Sat', views: 820, interactions: 204, rate: 24.8 },
+  { name: 'Sun', views: 950, interactions: 248, rate: 26.1 },
+];
+
+export const PART3_HOW_USED_TEXT = `We connected Claude Code and Google ADK autonomous coding agents directly into Switch AI via our Kotlin event daemon and Firebase Firestore real-time synchronization backend.
+
+Our agent operates primarily on Discord and Slack (with cross-platform support for MS Teams and Telegram).
+
+Real Work It Accomplishes:
+1. Automated Incident Resolution & Code Fixes: When an issue or webhook triggers in Discord/Slack (#pr-reviews or #incident-war-room), Switch routes the event to our Kotlin backend. The agent spins up an isolated sandbox, reproduces test failures, runs git blame, and generates validated patch diffs.
+2. Interactive Human-in-the-Loop Safeguards: Rather than blindly executing destructive commands in production or merging unreviewed code, our agent posts an interactive Block Kit message in Discord/Slack with live preview diffs and two interactive buttons: "Approve & Deploy" or "Reject & Rollback". Teammates can review, comment, or approve actions directly from their chat without opening a terminal.
+3. Live Multi-Agent Collaboration: Teammates interact via @mentions in chat threads to assign tasks, request architectural sanity checks, or trigger automated rollback drills. All state and audit logs are synchronized in real time with Cloud Firestore.`;
+
+export const PART3_WHAT_LIKED_TEXT = `What worked great:
+- Zero-friction chat-to-agent bridging: Taking coding agents out of solitary terminal windows and bringing them directly into existing team communication channels (Discord and Slack) where human collaboration already happens was a game-changer.
+- Asynchronous webhook routing: The event model and webhook delivery latency were rock solid, allowing our Kotlin daemon to instantly process incoming alerts and dispatch agent tasks.
+- Multi-platform flexibility: The ability to interface across Discord, Slack, and Teams without having to rewrite custom bot adapter harnesses from scratch.
+
+What got in the way / would improve:
+- Built-in session state & retry primitives: During long-running multi-turn agent tasks (e.g., executing full test suites), we had to implement custom Firebase heartbeat leases to prevent timeout drops. Having native long-poll or persistent task resumption in Switch would simplify backend daemon architectures.
+- Richer interactive payload primitives: Expanding native button and modal schema support across all chat providers so we don't have to maintain platform-specific card formatting variations.
+- Workspace-level agent access controls: Native RBAC rules defining which team members have authority to click "Approve Deploy" directly in the Switch webhook payload.`;
 
 interface SubmissionModalProps {
   isOpen: boolean;
@@ -31,10 +78,71 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
   const [license, setLicense] = useState(initialDraft?.license || 'MIT');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Preview pane state
-  const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
+  // Modal tab and analytics state
+  const [activeTab, setActiveTab] = useState<'form' | 'preview' | 'analytics'>('form');
+  const [analyticsMetric, setAnalyticsMetric] = useState<'platform' | 'daily'>('platform');
   const [simulatedAction, setSimulatedAction] = useState<string | null>(null);
   const [hasCopiedAll, setHasCopiedAll] = useState(false);
+  const [copiedPart3Q1, setCopiedPart3Q1] = useState(false);
+  const [copiedPart3Q2, setCopiedPart3Q2] = useState(false);
+
+  // Confetti Particle Effect Trigger
+  const hasTriggeredConfettiRef = React.useRef(false);
+
+  // Readiness Calculations
+  const hasTitle = Boolean(title.trim());
+  const hasDesc = Boolean(description.trim().length > 10);
+  const hasRepo = Boolean(repoUrl.trim().startsWith('http'));
+  const hasDemo = Boolean(demoUrl.trim().startsWith('http'));
+  const hasArch = Boolean(architecture.trim().length > 10);
+
+  let readinessPct = 0;
+  if (hasTitle) readinessPct += 15;
+  if (hasDesc) readinessPct += 15;
+  if (hasRepo) readinessPct += 25;
+  if (hasDemo) readinessPct += 25;
+  if (hasArch) readinessPct += 20;
+
+  const triggerReadinessConfetti = () => {
+    try {
+      // Left cannon burst
+      confetti({
+        particleCount: 50,
+        angle: 60,
+        spread: 65,
+        origin: { x: 0.05, y: 0.65 },
+        colors: ['#10b981', '#06b6d4', '#6366f1', '#f59e0b', '#ec4899'],
+      });
+      // Right cannon burst
+      confetti({
+        particleCount: 50,
+        angle: 120,
+        spread: 65,
+        origin: { x: 0.95, y: 0.65 },
+        colors: ['#10b981', '#06b6d4', '#6366f1', '#f59e0b', '#ec4899'],
+      });
+      // Center shower fireworks
+      setTimeout(() => {
+        confetti({
+          particleCount: 85,
+          spread: 100,
+          origin: { y: 0.4 },
+          colors: ['#10b981', '#34d399', '#6ee7b7', '#fcd34d', '#38bdf8', '#a78bfa'],
+        });
+      }, 220);
+    } catch {
+      // Fallback
+    }
+  };
+
+  React.useEffect(() => {
+    if (readinessPct === 100 && !hasTriggeredConfettiRef.current && isOpen) {
+      hasTriggeredConfettiRef.current = true;
+      triggerReadinessConfetti();
+    } else if (readinessPct < 100) {
+      hasTriggeredConfettiRef.current = false;
+    }
+  }, [readinessPct, isOpen]);
 
   const handleCopySubmissionForPortal = () => {
     const formatted = `
@@ -74,11 +182,29 @@ ${architecture || `${chatPlatform} Event Webhook -> Switch AI Gateway -> ${agent
 
 11. DETAILED DESCRIPTION:
 ${description || 'Autonomous engineering agent taking coding agents out of the terminal into team chat with human-in-the-loop safety rails.'}
+
+12. PART 3: HOW DID YOU USE SWITCH IN YOUR PROJECT?
+${PART3_HOW_USED_TEXT}
+
+13. PART 3: WHAT DID YOU LIKE ABOUT SWITCH, AND WHAT WOULD YOU IMPROVE?
+${PART3_WHAT_LIKED_TEXT}
 `.trim();
 
     navigator.clipboard.writeText(formatted);
     setHasCopiedAll(true);
     setTimeout(() => setHasCopiedAll(false), 2500);
+  };
+
+  const handleCopyPart3Q1 = () => {
+    navigator.clipboard.writeText(PART3_HOW_USED_TEXT);
+    setCopiedPart3Q1(true);
+    setTimeout(() => setCopiedPart3Q1(false), 2200);
+  };
+
+  const handleCopyPart3Q2 = () => {
+    navigator.clipboard.writeText(PART3_WHAT_LIKED_TEXT);
+    setCopiedPart3Q2(true);
+    setTimeout(() => setCopiedPart3Q2(false), 2200);
   };
 
   React.useEffect(() => {
@@ -219,30 +345,43 @@ ${description || 'Autonomous engineering agent taking coding agents out of the t
           </button>
         </div>
 
-        {/* Mobile Tab Switcher */}
-        <div className="flex lg:hidden items-center p-1 rounded-xl bg-neutral-950 border border-neutral-800">
+        {/* Tab Switcher: Submission Details, Agent Preview, Analytics & Feedback */}
+        <div className="flex items-center p-1 rounded-xl bg-neutral-950 border border-neutral-800">
           <button
             type="button"
-            onClick={() => setMobileTab('form')}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              mobileTab === 'form'
-                ? 'bg-neutral-800 text-white font-semibold'
+            onClick={() => setActiveTab('form')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+              activeTab === 'form'
+                ? 'bg-neutral-800 text-white font-semibold shadow-sm'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            Submission Details
+            <span>Submission Details</span>
           </button>
           <button
             type="button"
-            onClick={() => setMobileTab('preview')}
+            onClick={() => setActiveTab('preview')}
             className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-              mobileTab === 'preview'
-                ? 'bg-neutral-800 text-emerald-400 font-semibold'
+              activeTab === 'preview'
+                ? 'bg-neutral-800 text-emerald-400 font-semibold shadow-sm'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
             <Bot className="w-3.5 h-3.5" />
             <span>Agent Preview</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+              activeTab === 'analytics'
+                ? 'bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-800 shadow-sm'
+                : 'text-neutral-400 hover:text-emerald-300'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Analytics & Feedback</span>
+            <span className="px-1.5 py-0.2 text-[9px] font-mono rounded bg-emerald-500/20 text-emerald-300">NEW</span>
           </button>
         </div>
 
@@ -253,80 +392,277 @@ ${description || 'Autonomous engineering agent taking coding agents out of the t
           </div>
         )}
 
-        {/* Live Submission Readiness Meter */}
-        {(() => {
-          const hasTitle = Boolean(title.trim());
-          const hasDesc = Boolean(description.trim().length > 10);
-          const hasRepo = Boolean(repoUrl.trim().startsWith('http'));
-          const hasDemo = Boolean(demoUrl.trim().startsWith('http'));
-          const hasArch = Boolean(architecture.trim().length > 10);
+        {/* Live Submission Readiness Meter & Celebration Banner */}
+        <div className={`p-4 rounded-xl border transition-all duration-300 space-y-3 ${
+          readinessPct === 100
+            ? 'bg-gradient-to-r from-emerald-950/70 via-neutral-950 to-teal-950/70 border-emerald-500/50 shadow-lg shadow-emerald-500/10'
+            : 'bg-neutral-950/80 border-neutral-800'
+        }`}>
+          <div className="flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-2 text-white font-semibold">
+              <ShieldCheck className={`w-4 h-4 ${readinessPct === 100 ? 'text-emerald-400 animate-pulse' : 'text-neutral-400'}`} />
+              <span>Submission Qualification Meter</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`font-bold ${readinessPct >= 85 ? 'text-emerald-400' : readinessPct >= 50 ? 'text-amber-400' : 'text-neutral-400'}`}>
+                {readinessPct}% READY
+              </span>
+              <span className="text-neutral-600">·</span>
+              <span className="text-[10px] text-neutral-400 uppercase">
+                {readinessPct === 100 ? 'Fully Qualified' : 'Action Required'}
+              </span>
+            </div>
+          </div>
 
-          let pct = 0;
-          if (hasTitle) pct += 15;
-          if (hasDesc) pct += 15;
-          if (hasRepo) pct += 25;
-          if (hasDemo) pct += 25;
-          if (hasArch) pct += 20;
+          {/* Progress bar */}
+          <div className="w-full h-2 rounded-full bg-neutral-900 overflow-hidden relative">
+            <div
+              className={`h-full transition-all duration-500 ${
+                readinessPct === 100
+                  ? 'bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400'
+                  : readinessPct >= 50
+                  ? 'bg-amber-400'
+                  : 'bg-neutral-600'
+              }`}
+              style={{ width: `${readinessPct}%` }}
+            />
+          </div>
 
-          return (
-            <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <div className="flex items-center gap-2 text-white font-semibold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Submission Qualification Meter</span>
+          {/* Criteria Pills and Celebration Action */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-[10px] font-mono">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                hasRepo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+              }`}>
+                {hasRepo ? <Check className="w-3 h-3" /> : '○'} GitHub Repo
+              </span>
+              <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                hasDemo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+              }`}>
+                {hasDemo ? <Check className="w-3 h-3" /> : '○'} Demo Video
+              </span>
+              <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                hasArch ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+              }`}>
+                {hasArch ? <Check className="w-3 h-3" /> : '○'} Architecture
+              </span>
+              <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                hasDesc ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+              }`}>
+                {hasDesc ? <Check className="w-3 h-3" /> : '○'} Description
+              </span>
+            </div>
+
+            {readinessPct === 100 && (
+              <button
+                type="button"
+                onClick={triggerReadinessConfetti}
+                className="px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:text-white bg-emerald-900/60 hover:bg-emerald-800/80 border border-emerald-600/70 rounded-md flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                title="Celebrate 100% Submission Readiness with Confetti"
+              >
+                <PartyPopper className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+                <span>Celebrate 100% Ready 🎉</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* If activeTab === 'analytics', render Creator Analytics Dashboard; otherwise 2-Column Form & Preview */}
+        {activeTab === 'analytics' ? (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Top Stat Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
+                <div className="flex items-center justify-between text-neutral-400 text-xs">
+                  <span>Total Views</span>
+                  <Eye className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold ${pct >= 85 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-neutral-400'}`}>
-                    {pct}% READY
-                  </span>
-                  <span className="text-neutral-600">·</span>
-                  <span className="text-[10px] text-neutral-400 uppercase">
-                    {pct === 100 ? 'Fully Qualified' : 'Action Required'}
-                  </span>
+                <div className="text-xl sm:text-2xl font-bold text-white font-mono">
+                  2,220
                 </div>
+                <span className="text-[10px] text-emerald-400 font-mono">↑ 28.4% this week</span>
               </div>
 
-              {/* Progress bar */}
-              <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    pct >= 85 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-neutral-600'
-                  }`}
-                  style={{ width: `${pct}%` }}
-                />
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
+                <div className="flex items-center justify-between text-neutral-400 text-xs">
+                  <span>Interactions</span>
+                  <MousePointerClick className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-white font-mono">
+                  454
+                </div>
+                <span className="text-[10px] text-indigo-300 font-mono">Bot triggers & runs</span>
               </div>
 
-              {/* Criteria Pills */}
-              <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px] font-mono">
-                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
-                  hasRepo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
-                }`}>
-                  {hasRepo ? <Check className="w-3 h-3" /> : '○'} GitHub Repo
-                </span>
-                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
-                  hasDemo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
-                }`}>
-                  {hasDemo ? <Check className="w-3 h-3" /> : '○'} Demo Video
-                </span>
-                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
-                  hasArch ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
-                }`}>
-                  {hasArch ? <Check className="w-3 h-3" /> : '○'} Architecture
-                </span>
-                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
-                  hasDesc ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
-                }`}>
-                  {hasDesc ? <Check className="w-3 h-3" /> : '○'} Description
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
+                <div className="flex items-center justify-between text-neutral-400 text-xs">
+                  <span>Interaction Rate</span>
+                  <TrendingUp className="w-4 h-4 text-cyan-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-cyan-400 font-mono">
+                  20.5%
+                </div>
+                <span className="text-[10px] text-cyan-300 font-mono">Top 10% Submissions</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
+                <div className="flex items-center justify-between text-neutral-400 text-xs">
+                  <span>Readiness Score</span>
+                  <Award className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-amber-400 font-mono">
+                  {readinessPct}%
+                </div>
+                <span className="text-[10px] text-neutral-400 font-mono">
+                  {readinessPct === 100 ? 'Fully Qualified' : 'Action Required'}
                 </span>
               </div>
             </div>
-          );
-        })()}
 
-        {/* 2-Column Grid: Left Form, Right Live Agent Conversation Preview */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Form Fields */}
-          <div className={`lg:col-span-7 space-y-4 ${mobileTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
+            {/* Recharts Bar Chart Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-emerald-400" />
+                    <span>Project View Counts & Interaction Rates</span>
+                  </h4>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    Comparative metrics showing creator submission engagement, total impressions, and direct bot execution frequency.
+                  </p>
+                </div>
+
+                <div className="flex items-center p-0.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setAnalyticsMetric('platform')}
+                    className={`px-3 py-1 rounded-md transition-colors ${
+                      analyticsMetric === 'platform'
+                        ? 'bg-neutral-800 text-white font-semibold'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    By Platform
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnalyticsMetric('daily')}
+                    className={`px-3 py-1 rounded-md transition-colors ${
+                      analyticsMetric === 'daily'
+                        ? 'bg-neutral-800 text-white font-semibold'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    7-Day Trend
+                  </button>
+                </div>
+              </div>
+
+              {/* Recharts Simple Bar Chart */}
+              <div className="h-72 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analyticsMetric === 'platform' ? PLATFORM_ANALYTICS_DATA : DAILY_ANALYTICS_DATA}
+                    margin={{ top: 15, right: 20, left: -10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#737373"
+                      tick={{ fill: '#a3a3a3', fontSize: 11 }}
+                      axisLine={{ stroke: '#404040' }}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      stroke="#10b981"
+                      tick={{ fill: '#a3a3a3', fontSize: 11 }}
+                      axisLine={{ stroke: '#404040' }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#06b6d4"
+                      tick={{ fill: '#a3a3a3', fontSize: 11 }}
+                      unit="%"
+                      domain={[0, 35]}
+                      axisLine={{ stroke: '#404040' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#171717',
+                        borderColor: '#404040',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+                      }}
+                      itemStyle={{ fontSize: '11px' }}
+                      cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="views"
+                      name="View Counts"
+                      fill="#10b981"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="interactions"
+                      name="Interactions"
+                      fill="#6366f1"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="rate"
+                      name="Interaction Rate (%)"
+                      fill="#06b6d4"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Actionable Creator Feedback Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Highest Converting Channels</span>
+                </div>
+                <p className="text-[11px] text-neutral-400 leading-relaxed">
+                  Interactive approval cards in Discord generate a <strong>24.8% interaction rate</strong>, followed closely by the WeMakeDevs Portal at <strong>22.4%</strong>. Keep your interactive card buttons prominent in PR descriptions.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Video Retention Impact</span>
+                </div>
+                <p className="text-[11px] text-neutral-400 leading-relaxed">
+                  Submissions with a valid 90-120s demo video URL receive <strong>+35% higher reviewer completion</strong>. Make sure your video shows the agent trigger in chat and the resulting GitHub pull request.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Prize Qualification Status</span>
+                </div>
+                <p className="text-[11px] text-neutral-400 leading-relaxed">
+                  Your project currently meets <strong>{readinessPct}%</strong> of all mandatory criteria. All 5 components (Title, Tagline, GitHub Repo, Demo Video, and Architecture) qualify you for hackathon prize evaluations.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* 2-Column Grid: Left Form, Right Live Agent Conversation Preview */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Form Fields */}
+            <div className={`lg:col-span-7 space-y-4 ${activeTab === 'preview' ? 'hidden lg:block' : 'block'}`}>
             <form id="submission-form" onSubmit={handleSubmit} className="space-y-4">
               {/* Project Name & Tagline */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -546,11 +882,80 @@ ${description || 'Autonomous engineering agent taking coding agents out of the t
                   className="w-full px-3 py-2 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-white focus:border-emerald-500 outline-none"
                 />
               </div>
+
+              {/* Part 3 of 3 Official Hackathon Form Answers Helper */}
+              <div className="p-3.5 rounded-xl bg-neutral-950/90 border border-neutral-800 space-y-3 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Part 3 of 3: How you used Switch (Official Form Helper)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-neutral-400">2 of 2 Answered</span>
+                </div>
+
+                {/* Question 1 Helper */}
+                <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800/80 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[11px] font-medium text-neutral-200">
+                      1. How did you use Switch in your project? *
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyPart3Q1}
+                      className="px-2 py-0.5 text-[10px] font-mono bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded flex items-center gap-1 transition-colors shrink-0"
+                    >
+                      {copiedPart3Q1 ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy Answer</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 line-clamp-3 font-sans">
+                    {PART3_HOW_USED_TEXT}
+                  </p>
+                </div>
+
+                {/* Question 2 Helper */}
+                <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800/80 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[11px] font-medium text-neutral-200">
+                      2. What did you like about Switch, and what would you improve? *
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyPart3Q2}
+                      className="px-2 py-0.5 text-[10px] font-mono bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded flex items-center gap-1 transition-colors shrink-0"
+                    >
+                      {copiedPart3Q2 ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy Answer</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 line-clamp-3 font-sans">
+                    {PART3_WHAT_LIKED_TEXT}
+                  </p>
+                </div>
+              </div>
             </form>
           </div>
 
           {/* Right Column: Mock Agent Conversation Preview Pane */}
-          <div className={`lg:col-span-5 space-y-3 ${mobileTab === 'form' ? 'hidden lg:block' : 'block'}`}>
+          <div className={`lg:col-span-5 space-y-3 ${activeTab === 'form' ? 'hidden lg:block' : 'block'}`}>
             <div className="flex items-center justify-between text-xs font-medium text-neutral-400 mb-1">
               <span className="flex items-center gap-1.5">
                 <Bot className="w-3.5 h-3.5 text-emerald-400" />
@@ -683,6 +1088,7 @@ ${description || 'Autonomous engineering agent taking coding agents out of the t
             </div>
           </div>
         </div>
+      )}
 
         {/* Modal Bottom Actions */}
         <div className="pt-4 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
