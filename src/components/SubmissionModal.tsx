@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Project, ChatPlatform, AgentHarness, TrackId } from '../types/hackathon';
-import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, ShieldCheck, CheckCircle2, Bot, Play } from 'lucide-react';
+import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, ShieldCheck, CheckCircle2, Bot, Play, ExternalLink, Copy } from 'lucide-react';
 import { TRACKS } from '../data/hackathonData';
 
 interface SubmissionModalProps {
@@ -34,6 +34,52 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
   // Preview pane state
   const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
   const [simulatedAction, setSimulatedAction] = useState<string | null>(null);
+  const [hasCopiedAll, setHasCopiedAll] = useState(false);
+
+  const handleCopySubmissionForPortal = () => {
+    const formatted = `
+=== WEMAKEDEVS FLIP THE SWITCH HACKATHON SUBMISSION ===
+Official Portal: https://www.wemakedevs.org/hackathons/switch/submit
+
+1. PROJECT NAME:
+${title || 'FireSwitch: Kotlin & Firebase Collaborative Agent'}
+
+2. TAGLINE / SHORT PITCH:
+${tagline || 'Autonomous Kotlin daemon listening to Switch alerts with real-time Firestore sync and human approval cards.'}
+
+3. TRACK:
+${trackId}
+
+4. CHAT PLATFORM:
+${chatPlatform}
+
+5. AGENT HARNESS:
+${agentHarness}
+
+6. PUBLIC GITHUB REPO URL:
+${repoUrl || 'https://github.com/wemakedevs/switch-kotlin-firebase-starter'}
+
+7. DEMO VIDEO URL (90-120s):
+${demoUrl || 'https://loom.com/share/switch-hackathon-demo-sample'}
+
+8. TEAM NAME & MEMBERS:
+Team: ${teamName || 'FireSwitch Solo Team'}
+Members: ${members.filter((m) => m.trim()).join(', ') || 'Developer (Solo)'}
+
+9. OPEN SOURCE LICENSE:
+${license} (OSI Compliant)
+
+10. ARCHITECTURE & EVENT FLOW:
+${architecture || `${chatPlatform} Event Webhook -> Switch AI Gateway -> ${agentHarness} -> Cloud Firestore -> ${chatPlatform} Card with Human Approval`}
+
+11. DETAILED DESCRIPTION:
+${description || 'Autonomous engineering agent taking coding agents out of the terminal into team chat with human-in-the-loop safety rails.'}
+`.trim();
+
+    navigator.clipboard.writeText(formatted);
+    setHasCopiedAll(true);
+    setTimeout(() => setHasCopiedAll(false), 2500);
+  };
 
   React.useEffect(() => {
     if (initialDraft) {
@@ -639,26 +685,48 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="pt-4 border-t border-neutral-800 flex items-center justify-between gap-4">
+        <div className="pt-4 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-neutral-400">
             Open Source License: <strong className="text-neutral-200">{license}</strong> · Platform: <strong className="text-emerald-400">{chatPlatform}</strong>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+              onClick={handleCopySubmissionForPortal}
+              className="px-3.5 py-2 text-xs font-mono rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 flex items-center gap-1.5 transition-colors"
+              title="Copy formatted answers ready to paste into WeMakeDevs"
             >
-              Cancel
+              {hasCopiedAll ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Copied All Fields!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy for WeMakeDevs Portal</span>
+                </>
+              )}
             </button>
+
+            <a
+              href="https://www.wemakedevs.org/hackathons/switch/submit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800 rounded-lg flex items-center gap-1.5 transition-colors"
+            >
+              <span>WeMakeDevs Submit</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+
             <button
               type="submit"
               form="submission-form"
-              className="px-5 py-2.5 text-xs font-semibold text-neutral-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+              className="px-5 py-2 text-xs font-semibold text-neutral-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Submit Project to Gallery</span>
+              <span>Submit to Gallery</span>
             </button>
           </div>
         </div>
