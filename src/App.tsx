@@ -13,6 +13,8 @@ import { GitHubRepoConnect } from './components/GitHubRepoConnect';
 import { Leaderboard } from './components/Leaderboard';
 import { GeminiChatbot } from './components/GeminiChatbot';
 import { HowToRecordModal } from './components/HowToRecordModal';
+import { Workflow3DSection } from './components/3d/Workflow3DSection';
+import { SubmissionReadinessChecklist } from './components/SubmissionReadinessChecklist';
 import { INITIAL_PROJECTS } from './data/hackathonData';
 import { Project } from './types/hackathon';
 import { CheckCircle2, ArrowRight, ShieldCheck, Terminal, Users, Cpu } from 'lucide-react';
@@ -256,6 +258,16 @@ export default function App() {
 
         {/* Interactive Architecture & Workflow Simulator */}
         <InteractiveSimulator />
+
+        {/* 3D Digital Twin: Switch AI Bots & Workflows Scene */}
+        <Workflow3DSection />
+
+        {/* Hackathon Submission Readiness & Prize Qualification Audit */}
+        <SubmissionReadinessChecklist
+          onOpenSubmitModal={handleOpenSubmit}
+          onOpenSubmitWithProject={handleOpenSubmitWithDraft}
+          onScrollTo={handleScrollTo}
+        />
 
         {/* Live Top 5 Project Leaderboard */}
         <Leaderboard

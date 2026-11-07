@@ -1,5 +1,6 @@
-import React from 'react';
-import { Sun, Moon, Sparkles, Video } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sun, Moon, Sparkles, Video, Download } from 'lucide-react';
+import { downloadStarterPackageZip } from '../utils/starterZip';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -16,6 +17,19 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHowToRecord,
   onScrollTo,
 }) => {
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+
+  const handleDownloadZip = async () => {
+    try {
+      setIsDownloadingZip(true);
+      await downloadStarterPackageZip();
+    } catch (e) {
+      console.error('Failed to generate starter zip:', e);
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-neutral-950/85 dark:bg-neutral-950/85 border-b border-neutral-800/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
@@ -58,6 +72,12 @@ export const Header: React.FC<HeaderProps> = ({
             Workflow Sandbox
           </button>
           <button
+            onClick={() => onScrollTo('workflow-3d')}
+            className="hover:text-emerald-400 text-emerald-400 font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
+          >
+            <span>3D Workflow</span>
+          </button>
+          <button
             onClick={() => onScrollTo('github-integration')}
             className="hover:text-emerald-400 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
           >
@@ -68,6 +88,12 @@ export const Header: React.FC<HeaderProps> = ({
             className="text-amber-400 font-medium hover:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
           >
             <span>Leaderboard</span>
+          </button>
+          <button
+            onClick={() => onScrollTo('readiness-checklist')}
+            className="text-emerald-400 font-medium hover:text-emerald-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
+          >
+            <span>Readiness</span>
           </button>
           <button
             onClick={() => onScrollTo('projects')}
@@ -101,17 +127,27 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={handleDownloadZip}
+            disabled={isDownloadingZip}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-800/80 rounded-lg transition-colors whitespace-nowrap shrink-0 disabled:opacity-50"
+            title="Download ready-to-run Discord Bot & Kotlin/Firebase Agent Starter ZIP"
+          >
+            <Download className={`w-3.5 h-3.5 text-emerald-400 ${isDownloadingZip ? 'animate-bounce' : ''}`} />
+            <span>{isDownloadingZip ? 'Zipping...' : 'Download Starter ZIP'}</span>
+          </button>
+
+          <button
             onClick={onOpenHowToRecord}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
             title="How to record your submission video"
           >
             <Video className="w-3.5 h-3.5 text-emerald-400" />
-            <span>How to Record</span>
+            <span className="hidden sm:inline">How to Record</span>
           </button>
 
           <button
             onClick={onOpenSubmitModal}
-            className="px-4 py-2 text-sm font-medium text-neutral-950 bg-emerald-400 hover:bg-emerald-300 active:scale-95 rounded-lg transition-all shadow-sm hover:shadow-emerald-500/20 whitespace-nowrap shrink-0 flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs sm:text-sm font-medium text-neutral-950 bg-emerald-400 hover:bg-emerald-300 active:scale-95 rounded-lg transition-all shadow-sm hover:shadow-emerald-500/20 whitespace-nowrap shrink-0 flex items-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Submit Project</span>

@@ -16,8 +16,10 @@ import {
   Zap, 
   Video, 
   Clock, 
-  ExternalLink 
+  ExternalLink,
+  Download 
 } from 'lucide-react';
+import { downloadStarterPackageZip } from '../utils/starterZip';
 
 interface SoloHackerStudioProps {
   onOpenSubmitWithProject: (projectDraft: Partial<Project>) => void;
@@ -469,6 +471,19 @@ NODE_ENV="development"
 PORT=3000`
   };
 
+  const [isZipping, setIsZipping] = useState(false);
+
+  const handleDownloadZip = async () => {
+    try {
+      setIsZipping(true);
+      await downloadStarterPackageZip();
+    } catch (e) {
+      console.error('Failed to generate starter package zip:', e);
+    } finally {
+      setIsZipping(false);
+    }
+  };
+
   const handleCopyCode = (filename: string, content: string) => {
     navigator.clipboard.writeText(content);
     setCopiedFileName(filename);
@@ -740,34 +755,46 @@ PORT=3000`
                 })}
               </div>
 
-              {/* Copy button */}
-              <button
-                onClick={() =>
-                  handleCopyCode(
-                    activeCodeTab,
-                    activeCodeTab === 'index'
-                      ? generatedCode.index
-                      : activeCodeTab === 'package'
-                      ? generatedCode.package
-                      : activeCodeTab === 'readme'
-                      ? generatedCode.readme
-                      : generatedCode.env
-                  )
-                }
-                className="px-3 py-1 text-xs font-mono rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 flex items-center gap-1.5 transition-colors"
-              >
-                {copiedFileName === activeCodeTab ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy File</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadZip}
+                  disabled={isZipping}
+                  className="px-3 py-1 text-xs font-mono font-medium rounded bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 hover:text-white border border-emerald-800/80 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  title="Download all generated files and Discord bot runner as .zip"
+                >
+                  <Download className={`w-3.5 h-3.5 text-emerald-400 ${isZipping ? 'animate-bounce' : ''}`} />
+                  <span>{isZipping ? 'Zipping...' : 'Download Starter ZIP'}</span>
+                </button>
+
+                {/* Copy button */}
+                <button
+                  onClick={() =>
+                    handleCopyCode(
+                      activeCodeTab,
+                      activeCodeTab === 'index'
+                        ? generatedCode.index
+                        : activeCodeTab === 'package'
+                        ? generatedCode.package
+                        : activeCodeTab === 'readme'
+                        ? generatedCode.readme
+                        : generatedCode.env
+                    )
+                  }
+                  className="px-3 py-1 text-xs font-mono rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 flex items-center gap-1.5 transition-colors"
+                >
+                  {copiedFileName === activeCodeTab ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy File</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Code Body */}

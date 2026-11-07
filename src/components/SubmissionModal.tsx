@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Project, ChatPlatform, AgentHarness, TrackId } from '../types/hackathon';
-import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, CheckCircle2, Bot, Play } from 'lucide-react';
+import { X, Sparkles, Plus, Trash2, Check, AlertCircle, MessageSquare, Terminal, Shield, ShieldCheck, CheckCircle2, Bot, Play } from 'lucide-react';
 import { TRACKS } from '../data/hackathonData';
 
 interface SubmissionModalProps {
@@ -206,6 +206,76 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
             <span>{errorMessage}</span>
           </div>
         )}
+
+        {/* Live Submission Readiness Meter */}
+        {(() => {
+          const hasTitle = Boolean(title.trim());
+          const hasDesc = Boolean(description.trim().length > 10);
+          const hasRepo = Boolean(repoUrl.trim().startsWith('http'));
+          const hasDemo = Boolean(demoUrl.trim().startsWith('http'));
+          const hasArch = Boolean(architecture.trim().length > 10);
+
+          let pct = 0;
+          if (hasTitle) pct += 15;
+          if (hasDesc) pct += 15;
+          if (hasRepo) pct += 25;
+          if (hasDemo) pct += 25;
+          if (hasArch) pct += 20;
+
+          return (
+            <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800 space-y-2">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <div className="flex items-center gap-2 text-white font-semibold">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Submission Qualification Meter</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold ${pct >= 85 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-neutral-400'}`}>
+                    {pct}% READY
+                  </span>
+                  <span className="text-neutral-600">·</span>
+                  <span className="text-[10px] text-neutral-400 uppercase">
+                    {pct === 100 ? 'Fully Qualified' : 'Action Required'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    pct >= 85 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-neutral-600'
+                  }`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+
+              {/* Criteria Pills */}
+              <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px] font-mono">
+                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                  hasRepo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+                }`}>
+                  {hasRepo ? <Check className="w-3 h-3" /> : '○'} GitHub Repo
+                </span>
+                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                  hasDemo ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+                }`}>
+                  {hasDemo ? <Check className="w-3 h-3" /> : '○'} Demo Video
+                </span>
+                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                  hasArch ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+                }`}>
+                  {hasArch ? <Check className="w-3 h-3" /> : '○'} Architecture
+                </span>
+                <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${
+                  hasDesc ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+                }`}>
+                  {hasDesc ? <Check className="w-3 h-3" /> : '○'} Description
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* 2-Column Grid: Left Form, Right Live Agent Conversation Preview */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

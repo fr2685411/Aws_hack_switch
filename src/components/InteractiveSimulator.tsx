@@ -220,6 +220,13 @@ export const InteractiveSimulator: React.FC = () => {
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
             How Switch bridges terminal agents with real team channels.
           </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="px-3 py-1 rounded-lg bg-emerald-950/80 border border-emerald-800/80 text-[11px] font-mono text-emerald-300 flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>Linked Bot Workspace: <strong className="text-white">2da969e8-ba79-47ec-be27-f983d58fec9a</strong></span>
+              <span className="text-[10px] bg-emerald-900/60 px-1.5 py-0.5 rounded text-emerald-200">READY</span>
+            </span>
+          </div>
           <p className="text-neutral-400 text-base leading-relaxed">
             See the exact pipeline in action: from production alert or GitHub webhook, through Switch AI gateway, into terminal agents (Claude Code, Cursor, OpenCode), and back into Slack, Discord, or Teams with human approval controls.
           </p>

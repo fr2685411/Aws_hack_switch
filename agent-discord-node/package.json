@@ -1,0 +1,15 @@
+{
+  "name": "switch-discord-node-agent",
+  "version": "1.0.0",
+  "description": "Switch AI Discord Bot Teammate with Human-in-the-Loop Approvals",
+  "main": "bot.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node bot.mjs",
+    "dev": "node --watch bot.mjs"
+  },
+  "dependencies": {
+    "discord.js": "^14.17.3",
+    "dotenv": "^16.4.7"
+  }
+}
