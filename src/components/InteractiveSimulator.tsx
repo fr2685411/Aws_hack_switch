@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Play, RotateCcw, CheckCircle2, ArrowRight, Shield, GitPullRequest, AlertTriangle, MessageSquare, Terminal as TerminalIcon, Sparkles } from 'lucide-react';
+import { Play, RotateCcw, CheckCircle2, ArrowRight, Shield, GitPullRequest, AlertTriangle, MessageSquare, Terminal as TerminalIcon, Sparkles, Bug, ShieldAlert, Zap } from 'lucide-react';
 import { AgentHarness, ChatPlatform } from '../types/hackathon';
 import { InteractiveWebhookSimulator } from './InteractiveWebhookSimulator';
+import { AgentSystemLogStream } from './AgentSystemLogStream';
 
 type ScenarioKey = 'outage' | 'pr-review' | 'cve-patch' | 'chatops';
 
@@ -181,6 +182,7 @@ export const InteractiveSimulator: React.FC = () => {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<'visual' | 'logs'>('visual');
   const [userActionTaken, setUserActionTaken] = useState<string | null>(null);
+  const [isHallucinationMode, setIsHallucinationMode] = useState<boolean>(false);
 
   const scenario = SCENARIOS.find((s) => s.key === selectedScenarioKey) || SCENARIOS[0];
 
@@ -233,9 +235,74 @@ export const InteractiveSimulator: React.FC = () => {
           </p>
         </div>
 
-        {/* Live Interactive Webhook Dispatch Simulator */}
+        {/* Live Interactive Webhook Dispatch Simulator with Synced Failure Mode */}
         <div className="mb-14">
-          <InteractiveWebhookSimulator />
+          <InteractiveWebhookSimulator
+            forceFailureMode={isHallucinationMode}
+            onToggleFailureMode={setIsHallucinationMode}
+          />
+        </div>
+
+        {/* 'Simulate Agent Hallucination / Regression' Master Simulation Switch */}
+        <div className={`p-4 rounded-2xl border transition-all mb-8 ${
+          isHallucinationMode
+            ? 'bg-rose-950/40 border-rose-600/80 shadow-2xl shadow-rose-950/50 glitch-active ring-1 ring-rose-500/50'
+            : 'bg-neutral-900/90 border-neutral-800 hover:border-neutral-700'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                isHallucinationMode
+                  ? 'bg-rose-600/20 border-rose-500/60 text-rose-400 animate-pulse'
+                  : 'bg-neutral-800 border-neutral-700 text-neutral-400'
+              }`}>
+                <Bug className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-bold ${isHallucinationMode ? 'text-rose-200 glitch-text' : 'text-white'}`}>
+                    Simulate Agent Hallucination / Regression
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wide uppercase ${
+                    isHallucinationMode
+                      ? 'bg-rose-500 text-neutral-950 shadow-sm shadow-rose-500/30 animate-pulse'
+                      : 'bg-neutral-800 text-neutral-400 border border-neutral-700'
+                  }`}>
+                    {isHallucinationMode ? 'GLITCH ACTIVE' : 'SAFETY DRILL'}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">
+                  Triggers an authentic visual glitch effect across the live simulation canvas, simulates corrupted agent AST patch synthesis, and forces a dummy error payload in the webhook debugger.
+                </p>
+              </div>
+            </div>
+
+            {/* Toggle Switch */}
+            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+              <span className={`text-xs font-mono font-semibold ${isHallucinationMode ? 'text-rose-400' : 'text-neutral-500'}`}>
+                {isHallucinationMode ? 'REGRESSION FORCED 🚨' : 'CLEAN PIPELINE ✅'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isHallucinationMode}
+                onClick={() => {
+                  const next = !isHallucinationMode;
+                  setIsHallucinationMode(next);
+                  setUserActionTaken(null);
+                }}
+                className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+                  isHallucinationMode ? 'bg-rose-600' : 'bg-neutral-800'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isHallucinationMode ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Interactive Controls & Scenario Selector */}
@@ -345,20 +412,31 @@ export const InteractiveSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Interactive Chat / Terminal Canvas */}
+          {/* Right Column: Interactive Chat / Terminal Canvas with Visual Glitch Support */}
           <div className="lg:col-span-7">
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900 overflow-hidden shadow-2xl">
+            <div className={`rounded-2xl border overflow-hidden shadow-2xl transition-all ${
+              isHallucinationMode
+                ? 'border-rose-600/70 bg-rose-950/20 shadow-rose-950/60 ring-1 ring-rose-500/50 glitch-active glitch-scanlines'
+                : 'border-neutral-800 bg-neutral-900'
+            }`}>
               {/* Header of the mock canvas */}
-              <div className="px-5 py-3.5 border-b border-neutral-800 bg-neutral-950 flex items-center justify-between">
+              <div className={`px-5 py-3.5 border-b flex items-center justify-between transition-colors ${
+                isHallucinationMode ? 'border-rose-800 bg-rose-950/80' : 'border-neutral-800 bg-neutral-950'
+              }`}>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                    <div className={`w-2.5 h-2.5 rounded-full ${isHallucinationMode ? 'bg-rose-500 animate-ping' : 'bg-red-500/80'}`} />
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                   </div>
-                  <span className="text-xs font-mono text-neutral-400">
+                  <span className={`text-xs font-mono ${isHallucinationMode ? 'text-rose-300 font-bold glitch-text' : 'text-neutral-400'}`}>
                     {scenario.channelName} ({scenario.defaultPlatform})
                   </span>
+                  {isHallucinationMode && (
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-rose-900 text-rose-200 border border-rose-700 animate-pulse font-bold">
+                      TRIPWIRE TRIGGERED
+                    </span>
+                  )}
                 </div>
 
                 {/* View Mode Tabs */}
@@ -367,7 +445,7 @@ export const InteractiveSimulator: React.FC = () => {
                     onClick={() => setSelectedTab('visual')}
                     className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                       selectedTab === 'visual'
-                        ? 'bg-neutral-800 text-white'
+                        ? isHallucinationMode ? 'bg-rose-900 text-white font-bold' : 'bg-neutral-800 text-white'
                         : 'text-neutral-400 hover:text-white'
                     }`}
                   >
@@ -377,7 +455,7 @@ export const InteractiveSimulator: React.FC = () => {
                     onClick={() => setSelectedTab('logs')}
                     className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                       selectedTab === 'logs'
-                        ? 'bg-neutral-800 text-white'
+                        ? isHallucinationMode ? 'bg-rose-900 text-white font-bold' : 'bg-neutral-800 text-white'
                         : 'text-neutral-400 hover:text-white'
                     }`}
                   >
@@ -387,7 +465,28 @@ export const InteractiveSimulator: React.FC = () => {
               </div>
 
               {/* Body */}
-              <div className="p-6 min-h-[400px] flex flex-col justify-between">
+              <div className="p-6 min-h-[400px] flex flex-col justify-between space-y-4">
+                {/* Visual Glitch Alert Banner */}
+                {isHallucinationMode && (
+                  <div className="p-3.5 rounded-xl bg-rose-950/90 border border-rose-600 text-rose-200 text-xs flex flex-wrap items-center justify-between gap-3 shadow-lg shadow-rose-950/50 animate-in fade-in">
+                    <div className="flex items-center gap-2.5">
+                      <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 animate-pulse" />
+                      <div>
+                        <div className="font-mono font-bold text-rose-200 glitch-text flex items-center gap-2">
+                          <span>🚨 SIMULATING AGENT HALLUCINATION & AST REGRESSION</span>
+                          <span className="px-1.5 py-0.2 rounded bg-rose-900 text-[9px] font-mono border border-rose-700 text-rose-300">TRIPWIRE ACTIVE</span>
+                        </div>
+                        <p className="text-[11px] text-rose-300/80 mt-0.5">
+                          Visual glitch active. Sandboxed agent produced an invalid AST method and unhandled token rejection. Automated pipeline halted.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded bg-rose-900/80 border border-rose-700 text-[10px] font-mono text-rose-200 shrink-0 font-bold">
+                      EXIT 137 · SIGKILL
+                    </span>
+                  </div>
+                )}
+
                 {selectedTab === 'visual' ? (
                   <div className="space-y-6">
                     {/* Simulated incoming trigger in chat */}
@@ -409,45 +508,75 @@ export const InteractiveSimulator: React.FC = () => {
                     {/* Agent Response Card rendered via Switch */}
                     {activeStep >= 1 && (
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-sm shrink-0">
-                          {scenario.finalMessage.avatar}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 border ${
+                          isHallucinationMode
+                            ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+                            : 'bg-emerald-500/20 border-emerald-500/40'
+                        }`}>
+                          {isHallucinationMode ? '🚨' : scenario.finalMessage.avatar}
                         </div>
 
                         <div className="flex-1 space-y-3">
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="font-semibold text-emerald-400">
-                              {scenario.finalMessage.sender}
+                            <span className={`font-semibold ${isHallucinationMode ? 'text-rose-400 font-bold glitch-text' : 'text-emerald-400'}`}>
+                              {isHallucinationMode
+                                ? `${scenario.defaultHarness} [QUARANTINED BY SAFETY GOVERNOR]`
+                                : scenario.finalMessage.sender}
                             </span>
                             <span className="text-neutral-500">Switch AI Gateway · 14:02:18 UTC</span>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                          <div className={`p-4 rounded-xl border space-y-3 ${
+                            isHallucinationMode
+                              ? 'bg-rose-950/30 border-rose-600/60 text-xs'
+                              : 'bg-neutral-950 border-neutral-800'
+                          }`}>
                             <div className="text-sm font-semibold text-white">
-                              {scenario.finalMessage.title}
+                              {isHallucinationMode
+                                ? '🚨 CRITICAL AST REGRESSION: Agent Produced Corrupted Diff'
+                                : scenario.finalMessage.title}
                             </div>
                             <p className="text-xs text-neutral-300 leading-relaxed">
-                              {scenario.finalMessage.body}
+                              {isHallucinationMode
+                                ? 'The LLM hallucinated an invalid accessor "stripe_session.raw_v0_internal_secret()" and attempted an unauthorized external exfiltration request. Switch AST analyzer detected missing null checks and blocked execution before deployment.'
+                                : scenario.finalMessage.body}
                             </p>
 
-                            {scenario.finalMessage.codeSnippet && (
-                              <div className="p-3 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-mono text-emerald-300 whitespace-pre overflow-x-auto">
-                                {scenario.finalMessage.codeSnippet}
-                              </div>
-                            )}
+                            <div className={`p-3 rounded-lg text-xs font-mono whitespace-pre overflow-x-auto ${
+                              isHallucinationMode
+                                ? 'bg-neutral-950 border border-rose-800 text-rose-300'
+                                : 'bg-neutral-900 border border-neutral-800 text-emerald-300'
+                            }`}>
+                              {isHallucinationMode
+                                ? `// 🚨 SYNTAX & LOGIC CORRUPTION DETECTED (LLM HALLUCINATION)
+- const token = customer.stripe_session?.token;
++ const token = customer.stripe_session.raw_v0_internal_secret() // 💥 ReferenceError: undefined is not a function
++ customer.broadcastUnsafeTokenToSentry(token); // 🚨 LEAK: Exposing raw secret to telemetry`
+                                : scenario.finalMessage.codeSnippet}
+                            </div>
 
                             {/* Human in the loop action buttons */}
                             <div className="pt-2 border-t border-neutral-800/80">
-                              <div className="text-[11px] text-neutral-400 mb-2">
-                                Human-in-the-Loop Verification Required:
+                              <div className="text-[11px] text-neutral-400 mb-2 font-mono">
+                                {isHallucinationMode
+                                  ? 'EMERGENCY SAFETY TRIPWIRE INTERCEPT - ROLLBACK REQUIRED:'
+                                  : 'Human-in-the-Loop Verification Required:'}
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                {scenario.finalMessage.actions.map((act, i) => (
+                                {(isHallucinationMode
+                                  ? ['🛑 Reject & Rollback Branch', 'Quarantine Agent Sandbox', 'Override & Force Deploy (Risky)']
+                                  : scenario.finalMessage.actions
+                                ).map((act, i) => (
                                   <button
                                     key={i}
                                     onClick={() => setUserActionTaken(act)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap shrink-0 ${
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                                       userActionTaken === act
-                                        ? 'bg-emerald-400 text-neutral-950 border-emerald-400 font-semibold'
+                                        ? act.includes('Rollback')
+                                          ? 'bg-emerald-400 text-neutral-950 border-emerald-400 font-bold'
+                                          : 'bg-rose-500 text-neutral-950 border-rose-400 font-bold'
+                                        : act.includes('Rollback')
+                                        ? 'bg-rose-950 hover:bg-rose-900 text-rose-200 border-rose-800 hover:border-rose-600'
                                         : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-700 hover:border-neutral-600'
                                     }`}
                                   >
@@ -463,29 +592,76 @@ export const InteractiveSimulator: React.FC = () => {
 
                     {/* Follow up reaction when user clicks action */}
                     {userActionTaken && (
-                      <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-xs text-emerald-300 flex items-center justify-between">
+                      <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
+                        userActionTaken.includes('Rollback')
+                          ? 'bg-emerald-950/60 border-emerald-600 text-emerald-300'
+                          : 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300'
+                      }`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>Action executed: <strong className="font-semibold text-white">"{userActionTaken}"</strong></span>
+                          <span>
+                            {userActionTaken.includes('Rollback')
+                              ? <>Rollback Drill Executed: <strong className="font-semibold text-white">Branch restored to origin/main with zero downtime.</strong></>
+                              : <>Action executed: <strong className="font-semibold text-white">"{userActionTaken}"</strong></>}
+                          </span>
                         </div>
-                        <span className="font-mono text-[10px] text-emerald-400">STATUS: VERIFIED & LOGGED</span>
+                        <span className="font-mono text-[10px] text-emerald-400">
+                          {userActionTaken.includes('Rollback') ? 'STATUS: CLEAN REVERSION' : 'STATUS: VERIFIED & LOGGED'}
+                        </span>
                       </div>
                     )}
                   </div>
                 ) : (
-                  /* Terminal Logs View */
+                  /* Terminal Logs View with Glitch / Error Payload */
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 font-mono text-xs text-neutral-300 space-y-3 overflow-x-auto">
-                      <div className="text-neutral-500">// Real-time STDIN/STDOUT stream from terminal agent</div>
-                      <div className="whitespace-pre text-emerald-400">
-                        {scenario.steps[activeStep]?.terminalLog || scenario.steps[0].terminalLog}
+                      <div className="text-neutral-500">
+                        {isHallucinationMode
+                          ? '// Real-time STDIN/STDOUT stream: 🚨 AST TRIPWIRE FAILURE LOG'
+                          : '// Real-time STDIN/STDOUT stream from terminal agent'}
+                      </div>
+                      <div className={`whitespace-pre ${isHallucinationMode ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {isHallucinationMode
+                          ? `$ switch gateway listen --port 8080
+[INGEST] POST /events/datadog - AlertID: DD-98421
+[ROUTER] Dispatching event to worker: claude-code-harness
+[AGENT_STDOUT] Generating patch for checkout token retrieval...
+[AST_SCANNER] Syntax error detected in src/checkout.ts:143: unexpected token 'raw_v0_internal_secret'
+[TRIPWIRE] Unit test runner: 2 FAILED (NullPointerException), 2 PASSED
+[SECURITY_SENTINEL] Blocked unauthorized network egress to leak-collector.xyz
+[SANDBOX] Ephemeral container execution terminated with SIGKILL (Exit code 137)
+[SWITCH_GOVERNOR] Halting automated merge. Enforcing emergency human rollback.`
+                          : scenario.steps[activeStep]?.terminalLog || scenario.steps[0].terminalLog}
                       </div>
                     </div>
 
                     <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 font-mono text-xs text-neutral-400 space-y-2">
-                      <div className="text-neutral-500">// Switch Event Gateway Payload</div>
-                      <pre className="text-neutral-300 overflow-x-auto">
-                        {scenario.steps[activeStep]?.payloadSnippet || scenario.steps[0].payloadSnippet}
+                      <div className="text-neutral-500">
+                        {isHallucinationMode
+                          ? '// Switch Event Gateway Forced Error Payload (Webhook Debugger)'
+                          : '// Switch Event Gateway Payload'}
+                      </div>
+                      <pre className={`overflow-x-auto ${isHallucinationMode ? 'text-rose-300' : 'text-neutral-300'}`}>
+                        {isHallucinationMode
+                          ? JSON.stringify(
+                              {
+                                status: 'SAFETY_TRIPWIRE_TRIGGERED',
+                                error: 'LLM_HALLUCINATION_REGRESSION_DETECTED',
+                                severity: 'CRITICAL_P1',
+                                exitCode: 137,
+                                trippedCheck: 'AST_TREE_SITTER_SYNTAX_PARSER',
+                                failingUnitTests: [
+                                  'TestStripeSessionIdempotentRetry.kt - NullPointerException',
+                                  'TestCredentialExfiltrationDefense.kt - UnauthorizedNetworkEgressBlocked'
+                                ],
+                                governanceRecommendation: 'REJECT_AND_ROLLBACK_BRANCH',
+                                botWorkspaceId: '2da969e8-ba79-47ec-be27-f983d58fec9a',
+                                simulatedAt: '2026-11-07T08:42:04Z'
+                              },
+                              null,
+                              2
+                            )
+                          : scenario.steps[activeStep]?.payloadSnippet || scenario.steps[0].payloadSnippet}
                       </pre>
                     </div>
                   </div>
@@ -494,14 +670,45 @@ export const InteractiveSimulator: React.FC = () => {
                 {/* Footer status notice */}
                 <div className="pt-4 mt-6 border-t border-neutral-800/60 flex items-center justify-between text-xs text-neutral-400">
                   <div className="flex items-center gap-2">
-                    <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Terminal-to-Chat latency: <strong>~240ms</strong></span>
+                    <TerminalIcon className={`w-3.5 h-3.5 ${isHallucinationMode ? 'text-rose-400' : 'text-emerald-400'}`} />
+                    <span>
+                      {isHallucinationMode ? (
+                        <strong className="text-rose-400">TRIPWIRE HALT: 0ms execution latency (blocked by sentinel)</strong>
+                      ) : (
+                        <>Terminal-to-Chat latency: <strong>~240ms</strong></>
+                      )}
+                    </span>
                   </div>
                   <span>Switch AI Engine v2.4</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Agent System Log Stream: Live Decision-Making Feed with Latency & Status Codes */}
+        <div className="mt-12 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
+                  REAL-TIME TELEMETRY STREAM
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neutral-900 border border-neutral-800 text-neutral-300">
+                  LATENCY & STATUS CODES
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-white font-display">
+                Agent System Log & Decision Engine Telemetry
+              </h3>
+            </div>
+            <p className="text-xs text-neutral-400 font-mono">
+              Live audit of unified ingress routing, AST parsing, and sandboxed execution
+            </p>
+          </div>
+
+          <AgentSystemLogStream isFailureMode={isHallucinationMode} />
         </div>
       </div>
     </section>

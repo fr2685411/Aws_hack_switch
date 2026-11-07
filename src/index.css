@@ -22,3 +22,40 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(160, 160, 160, 0.4);
 }
+
+/* Visual Glitch & Tripwire Effects for Agent Hallucination Drill */
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  15% { transform: skew(-1deg); }
+  35% { transform: skew(1.2deg); }
+  55% { transform: skew(-0.8deg); }
+  75% { transform: skew(0.6deg); }
+  100% { transform: skew(0deg); }
+}
+
+@keyframes glitch-chromatic {
+  0% { text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4; }
+  50% { text-shadow: -2px 0 #ef4444, 2px 0 #06b6d4; }
+  100% { text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4; }
+}
+
+.glitch-active {
+  animation: glitch-skew 2s infinite ease-in-out alternate-reverse;
+}
+
+.glitch-text {
+  animation: glitch-chromatic 1.2s infinite ease-in-out;
+}
+
+.glitch-scanlines {
+  background-image: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(239, 68, 68, 0.08) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 255, 0.02),
+    rgba(255, 0, 0, 0.04)
+  );
+  background-size: 100% 4px, 6px 100%;
+}

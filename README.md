@@ -8,7 +8,7 @@
 
 > **WeMakeDevs Flip the Switch Hackathon Submission** ($10,000 USD Prize Pool)  
 > *Track: Incident Response Automation / PR Copilot*  
-> *Built by Solo Participant: ajrudeenkureshi2003@gmail.com*
+> *Built for WeMakeDevs Flip the Switch Hackathon (Workspace ID: 2da969e8-ba79-47ec-be27-f983d58fec9a)*
 
 ---
 

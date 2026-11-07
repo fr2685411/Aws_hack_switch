@@ -103,7 +103,15 @@ interface DispatchResult {
   trace: { step: string; name: string; durationMs: number }[];
 }
 
-export const InteractiveWebhookSimulator: React.FC = () => {
+export interface InteractiveWebhookSimulatorProps {
+  forceFailureMode?: boolean;
+  onToggleFailureMode?: (enabled: boolean) => void;
+}
+
+export const InteractiveWebhookSimulator: React.FC<InteractiveWebhookSimulatorProps> = ({
+  forceFailureMode,
+  onToggleFailureMode,
+}) => {
   const [selectedPreset, setSelectedPreset] = useState<WebhookPreset>(PRESET_WEBHOOKS[0]);
   const [chatPlatform, setChatPlatform] = useState<ChatPlatform>(PRESET_WEBHOOKS[0].defaultPlatform);
   const [agentHarness, setAgentHarness] = useState<AgentHarness>(PRESET_WEBHOOKS[0].defaultHarness);
@@ -118,8 +126,18 @@ export const InteractiveWebhookSimulator: React.FC = () => {
   const [hasCopiedCurl, setHasCopiedCurl] = useState<boolean>(false);
 
   // Agent Failure & Rollback Drill Simulation State
-  const [isFailureMode, setIsFailureMode] = useState<boolean>(false);
+  const [isFailureMode, setIsFailureMode] = useState<boolean>(forceFailureMode ?? false);
   const [isRolledBack, setIsRolledBack] = useState<boolean>(false);
+
+  // Sync with external forceFailureMode prop if provided
+  React.useEffect(() => {
+    if (forceFailureMode !== undefined) {
+      setIsFailureMode(forceFailureMode);
+      if (!forceFailureMode) {
+        setIsRolledBack(false);
+      }
+    }
+  }, [forceFailureMode]);
 
   const failureDiff = `// 🚨 REGRESSION: LLM Hallucinated deprecated API & broken type assertion
 - const token = customer.stripe_session?.token;
@@ -511,6 +529,7 @@ export const InteractiveWebhookSimulator: React.FC = () => {
                 setIsFailureMode(next);
                 setHumanDecision(null);
                 setIsRolledBack(false);
+                onToggleFailureMode?.(next);
               }}
               className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                 isFailureMode ? 'bg-rose-600' : 'bg-neutral-800'
@@ -852,25 +871,61 @@ export const InteractiveWebhookSimulator: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 3: Raw JSON Payload */}
+        {/* Tab 3: Raw JSON / Webhook Debugger Payload */}
         {activeTab === 'json' && (
-          <div className="p-4">
-            <div className="p-3 rounded-lg bg-neutral-950 border border-neutral-800 font-mono text-xs text-neutral-300 overflow-x-auto max-h-80">
+          <div className="p-4 space-y-3">
+            {isFailureMode && (
+              <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono flex flex-wrap items-center justify-between gap-2 shadow-inner">
+                <span className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+                  <strong>FORCED DUMMY ERROR PAYLOAD IN WEBHOOK DEBUGGER</strong>
+                </span>
+                <span className="px-2 py-0.5 rounded bg-rose-900 border border-rose-700 text-[10px] text-rose-200 font-bold">
+                  HTTP 500 · REGRESSION_INTERCEPT
+                </span>
+              </div>
+            )}
+            <div className={`p-3 rounded-lg border font-mono text-xs overflow-x-auto max-h-80 ${
+              isFailureMode
+                ? 'bg-neutral-950 border-rose-900/80 text-rose-300'
+                : 'bg-neutral-950 border-neutral-800 text-neutral-300'
+            }`}>
               <pre>
                 {JSON.stringify(
-                  dispatchResult?.event || {
-                    botWorkspaceId: '2da969e8-ba79-47ec-be27-f983d58fec9a',
-                    eventType: selectedPreset.eventType,
-                    source: selectedPreset.source,
-                    author: customAuthor,
-                    problem: customProblem,
-                    channel: selectedPreset.channel,
-                    chatPlatform,
-                    agentHarness,
-                    diffSnippet: selectedPreset.diffSnippet,
-                    actions: selectedPreset.actions,
-                    status: 'PENDING_APPROVAL',
-                  },
+                  isFailureMode
+                    ? {
+                        status: 'SAFETY_TRIPWIRE_TRIGGERED',
+                        error: 'LLM_HALLUCINATION_REGRESSION_DETECTED',
+                        severity: 'CRITICAL_P1',
+                        exitCode: 137,
+                        sandboxJail: 'CONTAINER_TERMINATED_AND_QUARANTINED',
+                        trippedCheck: 'AST_TREE_SITTER_SYNTAX_PARSER',
+                        failingUnitTests: [
+                          'TestStripeSessionIdempotentRetry.kt - NullPointerException on line 142',
+                          'TestCredentialExfiltrationDefense.kt - UnauthorizedNetworkEgressBlocked'
+                        ],
+                        botWorkspaceId: '2da969e8-ba79-47ec-be27-f983d58fec9a',
+                        eventType: 'SAFETY_TRIPWIRE_HALLUCINATION_DETECTED',
+                        agentHarness,
+                        chatPlatform,
+                        channel: selectedPreset.channel,
+                        corruptedDiffSnippet: failureDiff,
+                        governanceRecommendation: 'REJECT_AND_ROLLBACK_BRANCH',
+                        simulatedAt: new Date().toISOString(),
+                      }
+                    : (dispatchResult?.event || {
+                        botWorkspaceId: '2da969e8-ba79-47ec-be27-f983d58fec9a',
+                        eventType: selectedPreset.eventType,
+                        source: selectedPreset.source,
+                        author: customAuthor,
+                        problem: customProblem,
+                        channel: selectedPreset.channel,
+                        chatPlatform,
+                        agentHarness,
+                        diffSnippet: selectedPreset.diffSnippet,
+                        actions: selectedPreset.actions,
+                        status: 'PENDING_APPROVAL',
+                      }),
                   null,
                   2
                 )}
