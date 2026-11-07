@@ -1,0 +1,6 @@
+{
+  "name": "WeMakeDevs Switch Hackathon",
+  "description": "Global hackathon platform for developers to build impactful open source projects connecting AI coding agents with team workflows using Switch AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
